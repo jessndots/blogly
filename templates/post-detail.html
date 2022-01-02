@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}{{post.title}}{% endblock %}
+
+{% block content %}
+    <img src="{{user.image_url}}">
+    <h1><a href="/users/{{user.id}}">{{user.first_name}} {{user.last_name}}</a></h1>
+    <h2>{{post.title}}</h2>
+    <p>{{post.content}}</p>
+    <h3>{{post.created_at}}</h3>
+    <button><a href="/posts/{{post.id}}/edit">Edit Post</a></button>
+    <button><a href="/posts/{{post.id}}/delete">Delete Post</a></button>
+{% endblock %}

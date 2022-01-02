@@ -1,5 +1,5 @@
 from app import app
-from models import db, User
+from models import db, User, Post
 from unittest import TestCase
 
 app.config['TESTING']=True 
@@ -104,3 +104,108 @@ class UserRoutesTestCase(TestCase):
             html = resp.get_data(as_text=True)
             self.assertIn(f'User {user.first_name} {user.last_name} was deleted.', html)
             self.assertNotIn(f'{user.first_name} {user.last_name}</a></li>', html)
+
+    
+class PostRoutesTestCase(TestCase):
+    def setUp(self):
+        Post.query.delete()
+        User.query.delete()
+
+        test_user = User(first_name='test', last_name='user', image_url = 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Test-Logo.svg/783px-Test-Logo.svg.png')
+
+        db.session.add(test_user)
+        db.session.commit() 
+        
+        test_post_1 = Post(title='test title 1', content='test content 1', user_id=test_user.id)
+
+        test_post_2 = Post(title='test title 2', content='test content 2', user_id=test_user.id)
+
+        db.session.add(test_post_1)
+        db.session.add(test_post_2)
+        db.session.commit() 
+
+
+    def tearDown(self):
+        db.session.rollback()
+
+
+    def test_new_post_form(self):
+       with app.test_client() as client:
+           user = User.query.first()
+           resp = client.get(f'/users/{user.id}/posts/new')
+           html = resp.get_data(as_text=True)
+           self.assertEqual(resp.status_code, 200)
+           self.assertIn('<h1>Add Post for test user</h1>', html)
+           self.assertIn('<label for="title">Title</label>', html)
+           self.assertIn(f'<button><a href="/users/{user.id}">Cancel</a></button>', html)
+
+    def test_new_post_submit(self):
+        with app.test_client() as client:
+            user = User.query.first()
+            resp = client.post(f'/users/{user.id}/posts/new', data = {'title': 'test title 3', 'content': 'test content 3', 'user_id': user.id})
+            post = Post.query.filter_by(title = 'test title 3')[0]
+            html = resp.get_data(as_text=True)
+            self.assertEqual(resp.status_code, 302)
+            self.assertEqual(resp.location, f'http://localhost/posts/{post.id}')
+
+    def test_new_post_redirect(self):
+        with app.test_client() as client:
+            user = User.query.first()
+            resp = client.post(f'/users/{user.id}/posts/new', data = {'title': 'test title 3', 'content': 'test content 3', 'user_id': user.id}, follow_redirects=True)
+            post = Post.query.filter_by(title = 'test title 3')[0]
+            html = resp.get_data(as_text=True)
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('<p>Post created for test user.</p>', html)
+            self.assertIn(f'<h2>{post.title}</h2>', html)
+            self.assertIn(f'<button><a href="/posts/{post.id}/edit">Edit Post</a></button>', html)
+
+    def test_edit_post_form(self):
+        with app.test_client() as client:
+           post = Post.query.first()
+           resp = client.get(f'/posts/{post.id}/edit')
+           html = resp.get_data(as_text=True)
+           self.assertEqual(resp.status_code, 200)
+           self.assertIn('<h1>Edit Post for test user</h1>', html)
+           self.assertIn('<label for="title">Title</label>', html)
+           self.assertIn(f'<button><a href="/posts/{post.id}">Cancel</a></button>', html)
+
+    def test_edit_post_submit(self):
+        with app.test_client() as client:
+            post = Post.query.first()
+            resp = client.post(f'/posts/{post.id}/edit', data = {'title': 'edit title', 'content': 'edit content'})
+            html = resp.get_data(as_text=True)
+            self.assertEqual(resp.status_code, 302)
+            self.assertEqual(resp.location, f'http://localhost/posts/{post.id}')
+
+    def test_edit_post_redirect(self):
+        with app.test_client() as client:
+            post = Post.query.first()
+            resp = client.post(f'/posts/{post.id}/edit', data = {'title': 'edit title', 'content': 'edit content'}, follow_redirects=True)
+            html = resp.get_data(as_text=True)
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('<title>edit title</title>', html)
+            self.assertIn('<p>Post was edited.</p>', html)
+            self.assertIn('<h2>edit title</h2>', html)
+            self.assertIn('<p>edit content</p>', html)
+
+    def test_delete_post(self):
+        with app.test_client() as client:
+            post = Post.query.first()
+            resp = client.get(f'/posts/{post.id}/delete')
+            html = resp.get_data(as_text=True)
+            self.assertEqual(resp.status_code, 302)
+
+    def test_delete_post_redirection(self):
+        with app.test_client() as client:
+            post = Post.query.first()
+            resp = client.get(f'/posts/{post.id}/delete', follow_redirects=True)
+            html = resp.get_data(as_text=True)
+            self.assertIn(f'<p>Post was deleted.</p>', html)
+            self.assertNotIn(f'{post.title}', html)    
+
+
+
+
+    
+
+             
