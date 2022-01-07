@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING
 
+import datetime
+
 from sqlalchemy.orm import backref
 
 if TYPE_CHECKING:
@@ -37,7 +39,7 @@ class Post(db.Model):
     id = db.Column(db.Integer, primary_key = True, autoincrement = True)
     title = db.Column(db.String(100), nullable = False)
     content = db.Column(db.String, nullable = False)
-    created_at = db.Column(db.TIMESTAMP, nullable = False, server_default = db.func.now(), onupdate = db.func.now())
+    created_at = db.Column(db.DateTime, nullable = False, default = datetime.datetime.now)
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
@@ -46,4 +48,33 @@ class Post(db.Model):
     def __repr__(self):
         """Show info about post."""
         p = self
-        return f"<Post {p.id} {p.title} {p.created_at} {p.user_id}"
+        return f"<Post {p.id} {p.title} {p.created_at} {p.user_id} {p.tags}"
+
+    @property
+    def friendly_date(self):
+        """Return nicely-formatted date."""
+
+        return self.created_at.strftime("%a %b %-d  %Y, %-I:%M %p")
+
+
+
+
+class Tag(db.Model):
+    __tablename__ = "tags"
+
+    id = db.Column(db.Integer, primary_key = True, autoincrement = True)
+    name = db.Column(db.String(100), nullable = False, unique = True)
+
+    posts = db.relationship('Post', secondary = 'posts_tags', backref = 'tags')
+
+    def __repr__(self):
+        """Show info about tag."""
+        t = self
+        return f"<Tag {t.id} {t.name} {t.posts}>"
+
+
+class PostTag(db.Model):
+    __tablename__ = "posts_tags"
+
+    post_id = db.Column(db.Integer, db.ForeignKey("posts.id", ondelete='CASCADE'), primary_key = True)
+    tag_id = db.Column(db.Integer, db.ForeignKey("tags.id", ondelete='CASCADE'), primary_key = True)

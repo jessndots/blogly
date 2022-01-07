@@ -9,6 +9,18 @@
         <br>
         <label for="content">Content</label><br>
         <input type="text" id='content' name='content' required value="{{post.content}}"><br>
+        <fieldset>
+            <legend>Tags:</legend>
+            {% for tag in tags %}
+            
+            <input type="checkbox" 
+                id="tag_{{tag.id}}" 
+                name="tags" 
+                value="{{tag.id}}"
+                {% if tag in post.tags %}checked{% endif %}>
+            <label for="tag_{{tag.name}}"> {{tag.name}}</label><br>
+            {% endfor %}
+        </fieldset>
         <br>
         <button><a href="/posts/{{post.id}}">Cancel</a></button>
         <button>Edit</button>

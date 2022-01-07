@@ -1,5 +1,5 @@
 from app import app
-from models import db, User, Post
+from models import db, User, Post, Tag, PostTag
 from unittest import TestCase
 
 app.config['TESTING']=True 

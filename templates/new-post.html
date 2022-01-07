@@ -10,6 +10,13 @@
         <label for="content">Content</label><br>
         <input type="text" id='content' name='content' required><br>
         <br>
+        <fieldset>
+            <legend>Tags:</legend>
+            {% for tag in tags %}
+            <input type="checkbox" id="tag_{{tag.id}}" name="tags" value="{{tag.id}}">
+            <label for="tag_{{tag.name}}"> {{tag.name}}</label><br>
+            {% endfor %}
+        </fieldset>
         <button><a href="/users/{{user.id}}">Cancel</a></button>
         <button>Add</button>
     </form>
